@@ -14,33 +14,78 @@ const server = http.createServer((req,res)=> {  //request and response variables
     const query = url_parseObj.query;
     console.log(pathname);
     //Product page
-    if(pathname==='/Product' || pathname==='/'){
-        res.writeHead(200,{'Content-type' : 'text/html'});
-        res.end('this is the product page')
+    if(pathname==='/Products' || pathname==='/'){
+        res.writeHead(200,{'Content-type':'text/html'})
+
+        fs.readFile(`${__dirname}/templates/template-overview.html`,'utf-8',(err,data)=>{
+            let newOut='';
+
+            fs.readFile(`${__dirname}/templates/template-cards.html`,'utf-8',(err,cards)=>{
+               
+               let dataNew = laptopdata.map((cur,index)=>fillLaptopdata(cards,index)).join(''); 
+               const htmlReplaced=data.replace('{%cards%}',dataNew);
+               res.end(htmlReplaced);
+
+            });
+
+
+        })
       
     }
     ///Laptop page
     else if (pathname==='/Laptop' && query.id< laptopdata.length){
-      res.writeHead(200,{'Content-type':'text/html'});
-      res.end(`This is laptop page ${query.id}`);
+        res.writeHead(200,{'Content-type':'text/html'})
+
+      fs.readFile(`${__dirname}/templates/template-laptop.html`,'utf-8',(err,data)=>{
+          let output =fillLaptopdata(data,query.id); //fill the data from the json file
+        
+          res.end(output);//response to page
+
+      });
+
+    }
+
+    else if((/\.(jpg|jpeg|gif|png)/i).test(pathname)){
+
+        fs.readFile(`${__dirname}/data/img${pathname}`,(err,data)=>{
+            res.writeHead(200,{'Content-type':'image/jpg'})
+            res.end(data);
+        })
+
+
     }
     //Error page 
     else{
-        res.writeHead(200,{'Content-type':'text/html'})
+        res.writeHead(404,{'Content-type':'text/html'})
         res.end('Page is not available')
 
     }
-
-
-
-
 
     console.log('Someone acessesed the server');
 
 })
 
-server.listen(1337,'127.0.0.1',()=>{
+server.listen(1337,'127.0.0.1',()=>{//
 
     console.log('listening for request now')
 
 })
+
+const fillLaptopdata=(original,id)=>{ //function for replacing laptopdata
+
+    const laptop=laptopdata[id];
+    let output=original.replace(/{%productName%}/g,laptop.productName);
+    output=output.replace(/{%image%}/g,laptop.image);
+    output=output.replace(/{%price%}/g,laptop.price);
+    output=output.replace(/{%cpu%}/g,laptop.cpu);
+    output=output.replace(/{%ram%}/g,laptop.ram);
+    output=output.replace(/{%description%}/g,laptop.description);
+    output=output.replace(/{%id%}/g,id);
+    output=output.replace(/{%storage%}/g,laptop.storage);
+    output=output.replace(/{%screen%}/g,laptop.screen);
+
+
+
+
+   return output; 
+}
